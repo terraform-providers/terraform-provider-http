@@ -15,7 +15,7 @@ func newExprStatement(ast AST) AST {
 	return newAST(ASTKindExprStatement, ast)
 }
 
-// CommentStatement represents a comment in the ini definition.
+// CommentStatement represents a comment in the ini defintion.
 //
 //	grammar:
 //	comment -> #comment' | ;comment'

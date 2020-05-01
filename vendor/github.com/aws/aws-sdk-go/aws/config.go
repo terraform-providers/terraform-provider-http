@@ -20,7 +20,7 @@ type RequestRetryer interface{}
 // A Config provides service configuration for service clients. By default,
 // all clients will use the defaults.DefaultConfig structure.
 //
-//     // Create Session with MaxRetries configuration to be shared by multiple
+//     // Create Session with MaxRetry configuration to be shared by multiple
 //     // service clients.
 //     sess := session.Must(session.NewSession(&aws.Config{
 //         MaxRetries: aws.Int(3),
@@ -239,19 +239,12 @@ type Config struct {
 	//    	Key: aws.String("/foo/bar/moo"),
 	//    })
 	EnableEndpointDiscovery *bool
-
-	// DisableEndpointHostPrefix will disable the SDK's behavior of prefixing
-	// request endpoint hosts with modeled information.
-	//
-	// Disabling this feature is useful when you want to use local endpoints
-	// for testing that do not support the modeled host prefix pattern.
-	DisableEndpointHostPrefix *bool
 }
 
 // NewConfig returns a new Config pointer that can be chained with builder
 // methods to set multiple configuration values inline without using pointers.
 //
-//     // Create Session with MaxRetries configuration to be shared by multiple
+//     // Create Session with MaxRetry configuration to be shared by multiple
 //     // service clients.
 //     sess := session.Must(session.NewSession(aws.NewConfig().
 //         WithMaxRetries(3),
@@ -406,13 +399,6 @@ func (c *Config) WithEndpointDiscovery(t bool) *Config {
 	return c
 }
 
-// WithDisableEndpointHostPrefix will set whether or not to use modeled host prefix
-// when making requests.
-func (c *Config) WithDisableEndpointHostPrefix(t bool) *Config {
-	c.DisableEndpointHostPrefix = &t
-	return c
-}
-
 // MergeIn merges the passed in configs into the existing config object.
 func (c *Config) MergeIn(cfgs ...*Config) {
 	for _, other := range cfgs {
@@ -515,10 +501,6 @@ func mergeInConfig(dst *Config, other *Config) {
 
 	if other.EnableEndpointDiscovery != nil {
 		dst.EnableEndpointDiscovery = other.EnableEndpointDiscovery
-	}
-
-	if other.DisableEndpointHostPrefix != nil {
-		dst.DisableEndpointHostPrefix = other.DisableEndpointHostPrefix
 	}
 }
 
