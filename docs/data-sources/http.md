@@ -42,6 +42,10 @@ The following arguments are supported:
 * `request_headers` - (Optional) A map of strings representing additional HTTP
   headers to include in the request.
 
+* `method` - (Optional) Method name. Default value is `GET`.
+
+* `request_body` - (Optional) Request body to send. Default is none.
+
 ## Attributes Reference
 
 The following attributes are exported:
