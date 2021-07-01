@@ -8,10 +8,15 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
+
+const defaultRetryAttempts = 3
+const defaultRetryDelay = 10
 
 func dataSource() *schema.Resource {
 	return &schema.Resource{
@@ -49,6 +54,26 @@ func dataSource() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+
+			"retry": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"attempts": {
+							Type:     schema.TypeInt,
+							Optional: true,
+							Default:  defaultRetryAttempts,
+						},
+						"delay": {
+							Type:     schema.TypeInt,
+							Optional: true,
+							Default:  defaultRetryDelay,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -58,6 +83,16 @@ func dataSourceRead(ctx context.Context, d *schema.ResourceData, meta interface{
 	headers := d.Get("request_headers").(map[string]interface{})
 
 	client := &http.Client{}
+
+	if v, ok := d.GetOk("retry"); ok && len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
+		retry := v.([]interface{})[0].(map[string]interface{})
+
+		retryClient := retryablehttp.NewClient()
+		retryClient.RetryMax = retry["attempts"].(int)
+		retryClient.RetryWaitMin = time.Duration(retry["delay"].(int)) * time.Second
+		retryClient.RetryWaitMax = retryClient.RetryWaitMin
+		client = retryClient.StandardClient()
+	}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {

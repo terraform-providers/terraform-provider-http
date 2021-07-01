@@ -29,6 +29,20 @@ output "response_headers" {
 }
 `
 
+const testDataSourceConfig_retry = `
+data "http" "http_test" {
+  url = "%s/meta_%d.txt"
+  retry {
+	attempts = 1
+	delay = 2
+  }
+}
+
+output "body" {
+  value = data.http.http_test.body
+}
+`
+
 func TestDataSource_http200(t *testing.T) {
 	testHttpMock := setUpMockHttpServer()
 
@@ -67,6 +81,38 @@ func TestDataSource_http200(t *testing.T) {
 						return fmt.Errorf(
 							`'X-Double' response header is %s; want '1, 2'`,
 							response_headers["X-Double"].(string),
+						)
+					}
+
+					return nil
+				},
+			},
+		},
+	})
+}
+
+func TestDataSource_httpretry(t *testing.T) {
+	testHttpMock := setUpMockHttpServer()
+
+	defer testHttpMock.server.Close()
+
+	resource.UnitTest(t, resource.TestCase{
+		Providers: testProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(testDataSourceConfig_retry, testHttpMock.server.URL, 200),
+				Check: func(s *terraform.State) error {
+					_, ok := s.RootModule().Resources["data.http.http_test"]
+					if !ok {
+						return fmt.Errorf("missing data resource")
+					}
+
+					outputs := s.RootModule().Outputs
+
+					if outputs["body"].Value != "1.0.0" {
+						return fmt.Errorf(
+							`'body' output is %s; want '1.0.0'`,
+							outputs["body"].Value,
 						)
 					}
 
